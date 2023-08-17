@@ -17,8 +17,8 @@ func TestNextToken(t *testing.T) {
 	`
 
 	tests := []struct {
-		expectedType    string
-		expectedLiteral string
+		ExpectedType    token.Type
+		ExpectedLiteral string
 	}{
 		{token.LET, "let"},
 		{token.IDENT, "five"},
@@ -59,19 +59,19 @@ func TestNextToken(t *testing.T) {
 		{token.EOF, ""},
 	}
 
-	l := New(input)
+	lexer := New(input)
 
-	for i, tt := range tests {
-		tok := l.NextToken()
+	for index, test := range tests {
+		tok := lexer.NextToken()
 
-		if tok.Type != tt.expectedType {
-			t.Logf("tests[%d] - tok: %#v", i, tok)
-			t.Fatalf("tests[%d] - token type wrong. expected=%q, got=%q", i, tt.expectedType, tok.Type)
+		if tok.Type != test.ExpectedType {
+			t.Logf("tests[%d] - token: %#v", index, tok)
+			t.Fatalf("tests[%d] - token type wrong. expected=%q, got=%q", index, test.ExpectedType, tok.Type)
 		}
 
-		if tok.Literal != tt.expectedLiteral {
-			t.Logf("tests[%d] - tok: %#v", i, tok)
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q", i, tt.expectedLiteral, tok.Literal)
+		if tok.Literal != test.ExpectedLiteral {
+			t.Logf("tests[%d] - token: %#v", index, tok)
+			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q", index, test.ExpectedLiteral, tok.Literal)
 		}
 	}
 }

@@ -1,7 +1,9 @@
 package token
 
+type Type string
+
 type Token struct {
-	Type    string
+	Type    Type
 	Literal string
 }
 
@@ -46,7 +48,7 @@ const (
 	RETURN   = "RETURN"   // Token type for return.
 )
 
-var keywords = map[string]string{
+var keywords = map[string]Type{
 	"let":    LET,
 	"fn":     FUNCTION,
 	"return": RETURN,
@@ -56,12 +58,12 @@ var keywords = map[string]string{
 	"false":  FALSE,
 }
 
-func New(typ string, lit byte) Token {
+func New(typ Type, lit byte) Token {
 	return Token{Type: typ, Literal: string(lit)}
 }
 
-func IdentifyToken(identifier string) string {
-	if tok, ok := keywords[identifier]; ok {
+func IdentifyToken(identifier string) Type {
+	if tok, exists := keywords[identifier]; exists {
 		return tok
 	}
 
