@@ -1,9 +1,6 @@
 package lexer
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/alejandro31118/slb-lang/token"
 )
 
@@ -19,24 +16,16 @@ type lexer interface {
 }
 
 func New(source string) Lexer {
-	return Lexer{Source: source, Position: 0}
+	lex := Lexer{Source: source}
+	lex.ChopChar()
+	return lex
 }
 
 func (lex *Lexer) NextToken() token.Token {
 	lex.TrimLeft()
 
-	for lex.IsNotEmpty() {
-		substring := lex.Source[lex.Position:]
-		if !strings.HasPrefix(string(substring), "//") && !strings.HasPrefix(string(substring), "#") {
-			break
-		}
-
+	if lex.Char == '/' && lex.NextChar() == '/' {
 		lex.DropLine()
-		lex.TrimLeft()
-	}
-
-	if lex.IsEmpty() {
-		fmt.Println("AAAAAAAAAHH")
 	}
 
 	var tok token.Token
@@ -98,11 +87,11 @@ func (lex *Lexer) NextToken() token.Token {
 			tok = token.New(token.BANG, lex.Char)
 		}
 	default:
-		if lex.IsDigit() {
+		if isDigit(lex.Char) {
 			return lex.GetNumberToken()
 		}
 
-		if lex.IsLetter() {
+		if isLetter(lex.Char) {
 			tok.Literal = lex.GetIdent()
 			tok.Type = token.IdentifyToken(tok.Literal)
 
@@ -117,14 +106,14 @@ func (lex *Lexer) NextToken() token.Token {
 }
 
 func (lex *Lexer) TrimLeft() {
-	for lex.IsNotEmpty() && (lex.Char == ' ' || lex.Char == '\t' || lex.Char == '\n' || lex.Char == '\r') {
+	for lex.Char == ' ' || lex.Char == '\t' || lex.Char == '\n' || lex.Char == '\r' {
 		lex.ChopChar()
 	}
 }
 
 func (lex *Lexer) ChopChar() {
 	if lex.IsNotEmpty() {
-		lex.Char = lex.Source[lex.Position]
+		lex.Char = lex.Source[lex.ReadPosition]
 	} else {
 		lex.Char = 0
 	}
@@ -134,7 +123,7 @@ func (lex *Lexer) ChopChar() {
 }
 
 func (lex *Lexer) DropLine() {
-	for lex.IsNotEmpty() && (lex.Char != '\n' && lex.Char != '\r') {
+	for lex.Char != '\n' && lex.Char != '\r' {
 		lex.ChopChar()
 	}
 
@@ -155,17 +144,17 @@ func (lex *Lexer) GetString() string {
 }
 
 func (lex *Lexer) NextChar() byte {
-	if lex.Position >= len(lex.Source) {
+	if lex.IsEmpty() {
 		return 0
 	}
 
-	return lex.Source[lex.Position]
+	return lex.Source[lex.ReadPosition]
 }
 
-func (lex *Lexer) GetAbstract(conditionCallback func() bool) string {
+func (lex *Lexer) GetAbstract(conditionCallback func(byte) bool) string {
 	oldPosition := lex.Position
 
-	for conditionCallback() {
+	for conditionCallback(lex.Char) {
 		lex.ChopChar()
 	}
 
@@ -173,11 +162,11 @@ func (lex *Lexer) GetAbstract(conditionCallback func() bool) string {
 }
 
 func (lex *Lexer) GetNumber() string {
-	return lex.GetAbstract(lex.IsDigit)
+	return lex.GetAbstract(isDigit)
 }
 
 func (lex *Lexer) GetIdent() string {
-	return lex.GetAbstract(lex.IsLetter)
+	return lex.GetAbstract(isLetter)
 }
 
 func (lex *Lexer) GetNumberToken() token.Token {
@@ -193,17 +182,17 @@ func (lex *Lexer) GetNumberToken() token.Token {
 }
 
 func (lex *Lexer) IsNotEmpty() bool {
-	return lex.Position < len(lex.Source)
+	return lex.ReadPosition < len(lex.Source)
 }
 
 func (lex *Lexer) IsEmpty() bool {
-	return !lex.IsNotEmpty()
+	return lex.ReadPosition >= len(lex.Source)
 }
 
-func (lex *Lexer) IsDigit() bool {
-	return lex.Char >= '0' && lex.Char <= '9'
+func isDigit(char byte) bool {
+	return char >= '0' && char <= '9'
 }
 
-func (lex *Lexer) IsLetter() bool {
-	return lex.Char >= 'a' && lex.Char <= 'z' || lex.Char >= 'A' && lex.Char <= 'Z' || lex.Char == '_'
+func isLetter(char byte) bool {
+	return char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char == '_'
 }
