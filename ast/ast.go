@@ -15,3 +15,7 @@ func (assign *AssignStatement) TokenLiteral() string {
 func (ident *Ident) TokenLiteral() string {
 	return ident.Token.Literal
 }
+
+func (returnStmt *ReturnStatement) TokenLiteral() string {
+	return returnStmt.Token.Literal
+}

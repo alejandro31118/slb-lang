@@ -28,3 +28,8 @@ type AssignStatement struct {
 	Name  *Ident
 	Value Expression
 }
+
+type ReturnStatement struct {
+	Token       token.Token
+	ReturnValue string
+}

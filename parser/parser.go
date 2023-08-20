@@ -78,6 +78,8 @@ func (parser *Parser) ParseStatement() ast.Statement {
 	switch parser.CurrentToken.Type {
 	case token.LET:
 		return parser.ParseAssignStatement()
+	case token.RETURN:
+		return parser.ParseReturnStatement()
 	default:
 		return nil
 	}
@@ -100,6 +102,20 @@ func (parser *Parser) ParseAssignStatement() *ast.AssignStatement {
 	if !parser.ExpectNextTokenTypeBe(token.ASSIGN) {
 		return nil
 	}
+
+	if !parser.CurrentTokenTypeIs(token.SEMICOLON) {
+		parser.NextToken()
+	}
+
+	return stmt
+}
+
+func (parser *Parser) ParseReturnStatement() *ast.ReturnStatement {
+	stmt := &ast.ReturnStatement{
+		Token: parser.CurrentToken,
+	}
+
+	parser.NextToken()
 
 	if !parser.CurrentTokenTypeIs(token.SEMICOLON) {
 		parser.NextToken()
