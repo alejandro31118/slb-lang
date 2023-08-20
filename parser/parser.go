@@ -94,7 +94,7 @@ func (parser *Parser) ParseAssignStatement() *ast.AssignStatement {
 		return nil
 	}
 
-	stmt.Name = &ast.Ident{
+	stmt.Name = &ast.Identifier{
 		Token: parser.CurrentToken,
 		Value: parser.CurrentToken.Literal,
 	}
