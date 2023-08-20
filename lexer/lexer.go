@@ -11,12 +11,8 @@ type Lexer struct {
 	Char         byte
 }
 
-type lexer interface {
-	NextToken() token.Token
-}
-
-func New(source string) Lexer {
-	lex := Lexer{Source: source}
+func New(source string) *Lexer {
+	lex := &Lexer{Source: source}
 	lex.ChopChar()
 	return lex
 }
