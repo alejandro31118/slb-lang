@@ -8,18 +8,39 @@ import (
 	"github.com/alejandro31118/slb-lang/token"
 )
 
+const (
+	_ = iota
+	LOWEST
+	EQUALS
+	LESSGREATER
+	SUM
+	PRODUCT
+	PREFIX
+	CALL
+)
+
+type (
+	PrefixParseFunc func() ast.Expression
+	InfixParseFunc  func(ast.Expression) ast.Expression
+)
+
 type Parser struct {
-	Lexer          *lexer.Lexer
-	CurrentToken   token.Token
-	FollowingToken token.Token
-	Errors         []string
+	Lexer            *lexer.Lexer
+	CurrentToken     token.Token
+	FollowingToken   token.Token
+	Errors           []string
+	PrefixParseFuncs map[token.Type]PrefixParseFunc
+	InfixParseFuncs  map[token.Type]InfixParseFunc
 }
 
 func New(lexer *lexer.Lexer) *Parser {
 	parser := &Parser{
-		Lexer:  lexer,
-		Errors: []string{},
+		Lexer:            lexer,
+		Errors:           []string{},
+		PrefixParseFuncs: make(map[token.Type]PrefixParseFunc),
 	}
+
+	parser.RegisterPrefix(token.IDENT, parser.ParseIndentifierExpression)
 
 	// Get 2 tokens to set "CurrentToken" and "FollowingToken"
 	parser.NextToken()
@@ -81,8 +102,28 @@ func (parser *Parser) ParseStatement() ast.Statement {
 	case token.RETURN:
 		return parser.ParseReturnStatement()
 	default:
+		return parser.ParseExpressionStatement()
+	}
+}
+
+func (parser *Parser) ParseExpression(precedence int) ast.Expression {
+	prefix := parser.PrefixParseFuncs[parser.CurrentToken.Type]
+	if prefix == nil {
 		return nil
 	}
+
+	return prefix()
+}
+
+func (parser *Parser) ParseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: parser.CurrentToken}
+	stmt.Expression = parser.ParseExpression(LOWEST)
+
+	if parser.NextTokenTypeIs(token.SEMICOLON) {
+		parser.NextToken()
+	}
+
+	return stmt
 }
 
 func (parser *Parser) ParseAssignStatement() *ast.AssignStatement {
@@ -122,4 +163,15 @@ func (parser *Parser) ParseReturnStatement() *ast.ReturnStatement {
 	}
 
 	return stmt
+}
+
+func (parser *Parser) ParseIndentifierExpression() ast.Expression {
+	return &ast.Identifier{
+		Token: parser.CurrentToken,
+		Value: parser.CurrentToken.Literal,
+	}
+}
+
+func (parser *Parser) RegisterPrefix(tokenType token.Type, fn PrefixParseFunc) {
+	parser.PrefixParseFuncs[tokenType] = fn
 }
