@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/alejandro31118/slb-lang/ast"
 	"github.com/alejandro31118/slb-lang/lexer"
@@ -41,6 +42,7 @@ func New(lexer *lexer.Lexer) *Parser {
 	}
 
 	parser.RegisterPrefix(token.IDENT, parser.ParseIndentifierExpression)
+	parser.RegisterPrefix(token.INT, parser.ParseIntegerExpression)
 
 	// Get 2 tokens to set "CurrentToken" and "FollowingToken"
 	parser.NextToken()
@@ -170,6 +172,23 @@ func (parser *Parser) ParseIndentifierExpression() ast.Expression {
 		Token: parser.CurrentToken,
 		Value: parser.CurrentToken.Literal,
 	}
+}
+
+func (parser *Parser) ParseIntegerExpression() ast.Expression {
+	integer := &ast.Integer{
+		Token: parser.CurrentToken,
+	}
+
+	value, err := strconv.ParseInt(parser.CurrentToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("Could not parse %q as integer", parser.CurrentToken.Literal)
+		parser.Errors = append(parser.Errors, msg)
+
+		return nil
+	}
+
+	integer.Value = value
+	return integer
 }
 
 func (parser *Parser) RegisterPrefix(tokenType token.Type, fn PrefixParseFunc) {
